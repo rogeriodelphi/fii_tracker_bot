@@ -196,6 +196,41 @@ async def comprar_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"❌ Erro! Use: /comprar TICKER QTD PRECO TIPO\nEx: /comprar MXRF11 10 9.74 Papel")
 
 
+from asgiref.sync import sync_to_async
+from django.db import connection
+
+
+async def vender_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        ticker = context.args[0].upper()
+        qtd_venda = int(context.args[1])
+        print(f"DEBUG: Tentando vender {qtd_venda} de {ticker}...")  # Veja isso no terminal!
+
+        def db_venda():
+            from django.db import connection
+            connection.close()  # Libera o banco para evitar 'Database is locked'
+
+            fundo = FundoImobiliario.objects.filter(ticker=ticker).first()
+            if not fundo:
+                return f"❌ {ticker} não encontrado."
+
+            if fundo.quantidade < qtd_venda:
+                return f"❌ Você só tem {fundo.quantidade} cotas."
+
+            fundo.quantidade -= qtd_venda
+            fundo.save()
+            return f"✅ Vendido! {ticker} agora tem {fundo.quantidade} cotas."
+
+        msg = await sync_to_async(db_venda)()
+        await update.message.reply_text(msg)
+
+    except (IndexError, ValueError):
+        await update.message.reply_text("⚠️ Use: /vender TICKER QTD")
+    except Exception as e:
+        print(f"ERRO NO VENDER: {e}")
+        await update.message.reply_text(f"💥 Erro: {e}")
+
+
 async def dividendo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         ticker = context.args[0].upper()
@@ -303,11 +338,11 @@ class Command(BaseCommand):
         # REGISTRO DE TODOS OS COMANDOS
         app.add_handler(CommandHandler("start", start))
         app.add_handler(CommandHandler("comprar", comprar_handler))
+        app.add_handler(CommandHandler("vender", vender_handler))
         app.add_handler(CommandHandler("div", dividendo_handler))
         app.add_handler(CommandHandler("hoje", relatorio_fechamento))
         app.add_handler(CommandHandler("status", status_handler))
         app.add_handler(CommandHandler("carteira", status_handler))  # Dois nomes para o mesmo comando
-        # Adicione vender e vp seguindo o mesmo padrão se desejar
 
         # print("--- BOT RODANDO (WAL MODE) ---")
         # if __name__ == '__main__':
