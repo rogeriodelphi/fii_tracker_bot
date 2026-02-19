@@ -11,9 +11,9 @@ from django.db import transaction, connection, close_old_connections
 
 # --- 1. CONFIGURAÇÕES ---
 ALVOS_COMPRA = {
-    'KNCR11': 106.09, 'KNRI11': 166.58, 'GARE11': 8.56,
-    'MXRF11': 9.73, 'HGLG11': 156.87, 'XPML11': 110.98,
-    'XPLG11': 102.13, 'KNIP11': 91.40, 'KNHY11': 100.40,
+    'KNCR11': 106.00, 'KNRI11': 166.00, 'GARE11': 8.50,
+    'MXRF11': 9.70, 'HGLG11': 157.30, 'XPML11': 110.90,
+    'XPLG11': 102.20, 'KNIP11': 91.00, 'KNHY11': 99.90,
     'HGBS11': 19.97,
 }
 INTERVALO_SINAIS = 300  # Aumentado para 5 min para evitar travar o banco
@@ -35,10 +35,17 @@ def buscar_preco_na_b3(ticker):
 
 
 # --- 3. TAREFAS AUTOMÁTICAS (JOBS) ---
+
+# Criamos um dicionário simples fora da função para lembrar o último preço avisado
+# Isso evita que o bot repita o alerta se o preço não mudar significativamente
+ULTIMO_AVISO_PRECO = {}
+
+
 async def vigia_precos(context: ContextTypes.DEFAULT_TYPE):
     chat_id = context.job.chat_id
     for ticker, preco_alvo in ALVOS_COMPRA.items():
         preco_atual = await asyncio.to_thread(buscar_preco_na_b3, ticker)
+
         if preco_atual:
             def update_db():
                 connection.close()
@@ -49,15 +56,36 @@ async def vigia_precos(context: ContextTypes.DEFAULT_TYPE):
                 fundo.preco_teto = preco_alvo
                 fundo.variacao = variacao
                 fundo.save()
-                return variacao, preco_anterior
+                return variacao
 
-            var, p_ant = await sync_to_async(update_db)()
+            var = await sync_to_async(update_db)()
 
+            # Verificação de Oportunidade
             if preco_atual <= preco_alvo:
-                tendencia = "📉" if var < 0 else "📈" if var > 0 else "↔️"
-                msg = (f"🚨 **OPORTUNIDADE!**\n\n🏢 **{ticker}**\n💰 Preço: R$ {preco_atual:.2f} {tendencia}\n"
-                       f"📉 Alvo: R$ {preco_alvo:.2f}")
-                await context.bot.send_message(chat_id=chat_id, text=msg, parse_mode='Markdown')
+                margem = ((preco_alvo - preco_atual) / preco_alvo) * 100
+
+                # --- Lógica da Trava de Silêncio ---
+                # Só envia se:
+                # 1. For a primeira vez que atinge o alvo
+                # 2. OU se o preço caiu mais de 1% desde o último alerta enviado
+                ultimo_p = ULTIMO_AVISO_PRECO.get(ticker, 999999)
+                mudanca_desde_alerta = ((preco_atual / ultimo_p) - 1) * 100
+
+                if mudanca_desde_alerta <= -1.0 or ticker not in ULTIMO_AVISO_PRECO:
+                    ULTIMO_AVISO_PRECO[ticker] = preco_atual  # Atualiza o último preço avisado
+
+                    tendencia = "📉" if var < 0 else "📈" if var > 0 else "↔️"
+
+                    msg = (
+                        f"🚨 **OPORTUNIDADE!**\n\n"
+                        f"🏢 **{ticker}**\n"
+                        f"💰 Preço: R$ {preco_atual:.2f} {tendencia}\n"
+                        f"📉 Alvo: R$ {preco_alvo:.2f}\n"
+                        f"🎯 **Margem: {margem:.2f}% abaixo do alvo**\n"
+                        f"⚠️ _Aviso: Próximo alerta apenas se cair +1%_"
+                    )
+
+                    await context.bot.send_message(chat_id=chat_id, text=msg, parse_mode='Markdown')
 
 
 async def relatorio_fechamento(update: Update = None, context: ContextTypes.DEFAULT_TYPE = None):
@@ -267,7 +295,7 @@ async def status_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # --- 5. CLASSE PRINCIPAL ---
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        TOKEN = 'COLOQUE SEU TOKEN AQUI'
+        TOKEN = '7982038153:AAF9iP9-XVgVN3wFSSRyhkwj943_K3-NeJY'
 
         app = (ApplicationBuilder().token(TOKEN)
                .connect_timeout(30).read_timeout(30).write_timeout(30).build())
@@ -281,5 +309,23 @@ class Command(BaseCommand):
         app.add_handler(CommandHandler("carteira", status_handler))  # Dois nomes para o mesmo comando
         # Adicione vender e vp seguindo o mesmo padrão se desejar
 
-        print("--- BOT RODANDO (WAL MODE) ---")
+        # print("--- BOT RODANDO (WAL MODE) ---")
+        # if __name__ == '__main__':
+        #     # drop_pending_updates=True limpa o "cache" de mensagens ao iniciar
+        #     app.run_polling(drop_pending_updates=True)
+
+        # ... (todo o seu código anterior de funções e comandos) ...
+
+        print("🚀 Bot iniciado com sucesso! Pressione Ctrl+C para parar.")
+
+        # Inicia o monitoramento e mantém o script rodando infinitamente
         app.run_polling(drop_pending_updates=True)
+
+    # Esta parte garante que o Django execute o loop corretamente
+    if __name__ == "__main__":
+        try:
+            # Chame aqui a sua função principal que configura o 'app'
+            # ou certifique-se que o código acima não está dentro de uma função solta
+            pass
+        except KeyboardInterrupt:
+            pass
