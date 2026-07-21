@@ -3,218 +3,500 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sinal de Preços - Pro Dashboard</title>
+    <meta http-equiv="refresh" content="60">
+    <title>Monitor de Ativos B3</title>
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body { background-color: #0d1117; color: #c9d1d9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .card { background-color: #161b22; border: 1px solid #30363d; color: #c9d1d9; }
-        .table { color: #c9d1d9; border-color: #30363d; }
-        .table-hover tbody tr:hover { background-color: #1f2937; color: #fff; }
-        .progress { background-color: #30363d; height: 8px; }
-        .text-success-bright { color: #39d353 !important; }
-        .text-danger-bright { color: #ff7b72 !important; }
-        .text-warning-soft { color: #ffab70 !important; }
-        .badge-buy { background-color: #238636; color: white; }
-    </style>
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-card: #161b22;
+            --bg-header: #21262d;
+            --border-color: #30363d;
+            --text-main: #c9d1d9;
+            --text-muted: #8b949e;
+            --green: #39d353;
+            --red: #ff7b72;
+            --orange: #ffab70;
+            --blue: #2188ff;
+        }
+
+        :root.light {
+            --bg-primary: #f0f2f5;
+            --bg-card: #ffffff;
+            --bg-header: #e8eaed;
+            --border-color: #d0d7de;
+            --text-main: #1f2328;
+            --text-muted: #656d76;
+            --green: #1a7f37;
+            --red: #cf222e;
+            --orange: #bc4c00;
+            --blue: #0969da;
+        }
+
+        *, *::before, *::after {
+            transition: background-color 0.2s ease, color 0.15s ease, border-color 0.2s ease;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            min-height: 100vh;
+        }
+
+        #btnTheme {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-card);
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        /* Cards e Painéis */
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            border-radius: 12px;
+        }
+
+        .metric-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        /* Accordion e Estrutura dos Ativos */
+        .accordion-item {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color) !important;
+            border-radius: 12px !important;
+            overflow: hidden;
+            margin-bottom: 0.8rem;
+        }
+
+        .accordion-button {
+            background-color: var(--bg-card) !important;
+            color: var(--text-main) !important;
+            border: none;
+            box-shadow: none !important;
+            padding: 1rem 1.25rem;
+        }
+
+        .accordion-button:not(.collapsed) {
+            background-color: var(--bg-header) !important;
+        }
+
+        .accordion-button::after {
+            filter: invert(0.6);
+        }
+
+        /* Tabela */
+        .table {
+            color: var(--text-main);
+            border-color: var(--border-color);
+            font-size: 0.85rem;
+            margin-bottom: 0;
+        }
+
+        .table thead th {
+            background-color: var(--bg-header);
+            border-color: var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .table tbody td {
+            border-color: var(--border-color);
+            vertical-align: middle;
+            padding: 0.65rem 0.85rem;
+            background-color: var(--bg-card);
+        }
+
+        .table-hover tbody tr:hover td {
+            background-color: var(--bg-header);
+        }
+
+        /* Indicadores */
+        .text-success-bright { color: var(--green) !important; }
+        .text-danger-bright  { color: var(--red) !important; }
+
+        .badge-buy {
+            background: linear-gradient(135deg, #238636, #2ea043);
+            color: white;
+            border-radius: 6px;
+            font-size: 0.72rem;
+        }
+
+        .badge-wait {
+            background-color: var(--bg-header);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.72rem;
+        }
+
+        .progress {
+            background-color: var(--border-color);
+            height: 6px;
+            border-radius: 4px;
+        }
+
+        /* Status Header */
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--green);
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+
+        /* Estilo da barra em linha da Categoria */
+        .category-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            margin-right: 15px;
+            gap: 15px;
+        }
+        .category-col {
+            flex: 1;
+            text-align: right;
+        }
+        .category-label {
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        .category-value {
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+    </style>
 </head>
 <body>
 
-<div class="container py-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold">📊 Monitor de Ativos <span class="text-primary">B3</span></h2>
-        <span class="badge bg-dark border border-secondary">Status: Bot Online</span>
+<div class="container-fluid px-4 py-4">
+
+    <!-- Header Principal -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 pb-3 mb-4 border-bottom border-secondary-subtle">
+        <div>
+            <h4 class="fw-bold mb-0">
+                <i class="bi bi-bar-chart-fill text-primary me-2"></i>
+                Monitor de Ativos <span class="text-primary">B3</span>
+            </h4>
+            <small class="text-muted d-flex align-items-center gap-1 mt-1">
+                <i class="bi bi-clock"></i>
+                Atualizado <span id="tempoDecorrido" class="fw-semibold text-body-emphasis">há 0s</span>
+                <span class="mx-1">·</span>
+                próxima atualização em <span id="tempoRestante" class="fw-semibold text-primary">60s</span>
+            </small>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-dark border border-secondary px-3 py-2">
+                <span class="status-dot"></span>Bot Online
+            </span>
+            <a href="{% url 'importar_carteira' %}" class="btn btn-outline-info btn-sm fw-semibold rounded-2">
+                <i class="bi bi-file-earmark-pdf-fill me-1"></i> Importar PDF
+            </a>
+            <a href="{% url 'cadastrar_ativo' %}" class="btn btn-primary btn-sm fw-semibold rounded-2">
+                <i class="bi bi-plus-lg me-1"></i> Cadastrar Ativo
+            </a>
+            <button id="btnTheme" title="Alternar tema">
+                <i class="bi bi-moon-stars-fill"></i>
+            </button>
+        </div>
     </div>
 
-    <div class="card shadow-lg">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead style="background-color: #21262d;">
-                        <tr>
-                            <th class="ps-4 py-3">Ativo</th>
-                            <th>Tipo</th>
-                            <th>Qtd</th>
-                            <th class="py-3">Preço Atual</th>
-                            <th class="py-3">P/VP</th>
-                            <th class="py-3">Variação (%)</th>
-                            <th class="py-3">Lucro/Prej. (R$)</th>
-                            <th class="py-3">Distância do Alvo</th>
-                            <th class="py-3">Preço Teto</th>
-                            <th class="py-3">Magic Number (Bola de Neve)</th>
-                            <th class="py-3 text-center">Ação</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for fii in fundos %}
-                        {% if fii.quantidade > 0 %}
-                        <tr>
-                            <td><strong>{{ fii.ticker }}</strong></td>
-                            <td>
-                                <span class="badge
-                                    {% if fii.tipo == 'Papel' %}bg-secondary
-                                    {% elif fii.tipo == 'Tijolo' %}bg-primary
-                                    {% elif fii.tipo == 'Fof' %}bg-info
-                                    {% else %}bg-dark{% endif %}">
-                                    {{ fii.tipo|default:"Tijolo"|capfirst }}
-                                </span>
-                            </td>
-                            <td>{{ fii.quantidade }}</td>
+    <!-- Mensagens do Django -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show card border-0 mb-4 p-3" role="alert">
+                <i class="bi bi-info-circle me-2"></i> {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
 
-                            <td>
-                                <span class="fw-bold">R$ {{ fii.preco_atual }}</span>
-                                {% if fii.quantidade > 0 %}
-                                    <br>
-                                    <small style="font-size: 0.75rem;"
-                                           class="{% if fii.preco_atual < fii.preco_medio %}text-warning-soft{% else %}text-muted{% endif %}">
-                                        Médio: R$ {{ fii.preco_medio|stringformat:".2f" }}
-                                        {% if fii.preco_atual < fii.preco_medio %}
-                                            ⚠️ <span class="badge bg-warning text-dark" style="font-size: 0.5rem;">BAIXAR MÉDIO</span>
-                                        {% endif %}
-                                    </small>
-                                {% endif %}
-                            </td>
+    <!-- Métricas do Topo -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card p-3 h-100">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="metric-icon" style="background: rgba(33,136,255,0.15);">
+                        <i class="bi bi-wallet2 text-primary"></i>
+                    </div>
+                    <div>
+                        <div class="category-label">Patrimônio Alocado</div>
+                        <div class="fw-bold fs-6">R$ {{ total_investido|floatformat:2 }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card p-3 h-100">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="metric-icon" style="background: rgba(57,211,83,0.15);">
+                        <i class="bi bi-cash-coin" style="color: var(--green);"></i>
+                    </div>
+                    <div>
+                        <div class="category-label">Projeção Dividendos</div>
+                        <div class="fw-bold text-success-bright fs-6">R$ {{ renda_estimada|floatformat:2 }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card p-3 h-100">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="metric-icon" style="background: rgba(13,202,240,0.15);">
+                        <i class="bi bi-snow2 text-info"></i>
+                    </div>
+                    <div>
+                        <div class="category-label">Bola de Neve Ativa</div>
+                        <div class="fw-bold text-info fs-6">{{ magic_atingidos }} <span class="text-muted fw-normal fs-7">de {{ total_ativos }}</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card p-3 h-100">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="metric-icon" style="background: rgba(255,171,112,0.15);">
+                        <i class="bi bi-robot" style="color: var(--orange);"></i>
+                    </div>
+                    <div>
+                        <div class="category-label">Status do Sistema</div>
+                        <div class="fw-bold text-warning fs-6">ONLINE</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                            <td class="fw-bold">
-                                <span class="{% if fii.p_vp > 1.05 %}text-danger-bright{% elif fii.p_vp < 1.0 %}text-success-bright{% endif %}">
-                                    {{ fii.p_vp|stringformat:".2f" }}
-                                </span>
-                                <br>
-                                <small class="text-muted" style="font-size: 0.7rem;">VP: R$ {{ fii.valor_patrimonial }}</small>
-                            </td>
+    <!-- Seção Principal: Lista de Categorias e Gráficos -->
+    <div class="row g-3">
 
-                            <td class="{% if fii.variacao < 0 %}text-danger-bright{% else %}text-success-bright{% endif %} fw-bold">
-                                {% if fii.variacao < 0 %}📉{% else %}📈{% endif %} {{ fii.variacao|stringformat:".2f" }}%
-                            </td>
+        <!-- Lista de Ativos em Accordion -->
+        <div class="col-12 col-xl-8">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h5 class="fw-bold m-0">Meus Ativos <span class="text-muted fs-6">({{ total_ativos }})</span></h5>
+            </div>
 
-                            <td class="fw-bold">
-                                {% if fii.quantidade > 0 %}
-                                    <span class="{% if fii.lucro_total < 0 %}text-danger-bright{% else %}text-success-bright{% endif %}">
-                                        R$ {{ fii.lucro_total|stringformat:".2f" }}
-                                    </span>
-                                {% else %}
-                                    <span class="text-muted opacity-50">-</span>
-                                {% endif %}
-                            </td>
+            <div class="accordion" id="accordionAtivos">
+                {% for tipo_nome, dados in categorias.items %}
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="heading-{{ forloop.counter }}">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ forloop.counter }}">
 
-                            <td style="min-width: 150px;">
-                                <div class="small mb-1">
-                                    {% if fii.preco_atual <= fii.preco_teto %}
-                                        <span class="text-success-bright">No Alvo!</span>
-                                    {% else %}
-                                        Faltam R$ {{ fii.falta_quanto|stringformat:".2f" }}
-                                    {% endif %}
+                            <div class="category-row">
+                                <!-- Categoria -->
+                                <div class="d-flex align-items-center gap-2" style="min-width: 150px;">
+                                    {% if tipo_nome == 'Ações' or tipo_nome == 'Ação' %}<i class="bi bi-graph-up-arrow text-success fs-5"></i>
+                                    {% elif tipo_nome == 'FII' or tipo_nome == 'FIIs' %}<i class="bi bi-building text-primary fs-5"></i>
+                                    {% elif tipo_nome == 'BDR' or tipo_nome == 'BDRs' %}<i class="bi bi-globe text-info fs-5"></i>
+                                    {% elif tipo_nome == 'Renda Fixa' %}<i class="bi bi-shield-check text-danger fs-5"></i>
+                                    {% elif tipo_nome == 'Cripto' or tipo_nome == 'Criptomoedas' %}<i class="bi bi-currency-bitcoin text-warning fs-5"></i>
+                                    {% elif tipo_nome == 'ETF' or tipo_nome == 'ETFs' %}<i class="bi bi-pie-chart text-info fs-5"></i>
+                                    {% else %}<i class="bi bi-bank text-secondary fs-5"></i>{% endif %}
+
+                                    <span class="fw-bold fs-6">{{ tipo_nome }}</span>
                                 </div>
-                                <div class="progress">
-                                    <div class="progress-bar {% if fii.preco_atual <= fii.preco_teto %}bg-success{% else %}bg-primary{% endif %}"
-                                         role="progressbar"
-                                         style="width: {% widthratio fii.preco_teto fii.preco_atual 100 %}%">
+
+                                <!-- Ativos (Quantidade) -->
+                                <div class="category-col text-center">
+                                    <div class="category-label">Ativos</div>
+                                    <div class="category-value">{{ dados.qtd_ativos }}</div>
+                                </div>
+
+                                <!-- Valor Total -->
+                                <div class="category-col">
+                                    <div class="category-label">Valor total</div>
+                                    <div class="category-value">R$ {{ dados.total_valor|floatformat:2 }}</div>
+                                </div>
+
+                                <!-- Variação -->
+                                <div class="category-col">
+                                    <div class="category-label">Variação</div>
+                                    <div class="category-value {% if dados.variacao_dia < 0 %}text-danger-bright{% else %}text-success-bright{% endif %}">
+                                        {{ dados.variacao_dia|default:"0.00"|floatformat:2 }}%
                                     </div>
                                 </div>
-                            </td>
 
-                            <td>R$ {{ fii.preco_teto }}</td>
-
-                            <td>
-                                {% if fii.ultimo_dividendo > 0 %}
-                                    <div class="small mb-1">
-                                        <span class="fw-bold">{{ fii.quantidade }}</span> /
-                                        <span class="text-info">{{ fii.magic_number }}</span> cotas
+                                <!-- Rentabilidade -->
+                                <div class="category-col">
+                                    <div class="category-label">Rentabilidade</div>
+                                    <div class="category-value {% if dados.rentabilidade < 0 %}text-danger-bright{% else %}text-success-bright{% endif %}">
+                                        {{ dados.rentabilidade|floatformat:2 }}%
                                     </div>
+                                </div>
 
-                                    <div class="progress" style="height: 10px; background-color: #30363d;">
-                                        <div class="progress-bar {% if fii.progresso_magic >= 100 %}bg-success{% else %}bg-info{% endif %}"
-                                             style="width: {{ fii.progresso_magic }}%;">
-                                        </div>
-                                    </div>
+                                <!-- % na Carteira -->
+                                <div class="category-col">
+                                    <div class="category-label">% na carteira</div>
+                                    <div class="category-value">{{ dados.percentual_carteira }}%</div>
+                                </div>
+                            </div>
 
-                                    <small class="text-muted" style="font-size: 0.7rem;">
-                                        {% if fii.faltam_para_magic > 0 %}
-                                            Faltam: <strong>{{ fii.faltam_para_magic }}</strong> para o objetivo
-                                        {% else %}
-                                            <span class="text-success-bright">🏆 BOLA DE NEVE ATIVA</span>
-                                        {% endif %}
-                                    </small>
-                                {% else %}
-                                    <span class="text-muted" style="font-size: 0.8rem;">Aguardando dividendo...</span>
-                                {% endif %}
-                            </td>
+                        </button>
+                    </h2>
 
-                            <td class="text-center">
-                                {% if fii.preco_atual <= fii.preco_teto %}
-                                    <span class="badge badge-buy px-3 py-2">🔥 COMPRAR</span>
-                                {% else %}
-                                    <span class="badge bg-secondary px-3 py-2 opacity-50">AGUARDAR</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endif %}
-                        {% endfor %}
-                    </tbody>
-                </table>
+                    <div id="collapse-{{ forloop.counter }}" class="accordion-collapse collapse" data-bs-parent="#accordionAtivos">
+                        <div class="accordion-body p-0 border-top border-secondary">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th class="ps-3">Ativo</th>
+                                            <th>Qtd</th>
+                                            <th>Preço Atual / Médio</th>
+                                            <th>Variação</th>
+                                            <th>Preço Teto</th>
+                                            <th>Dist. Alvo</th>
+                                            <th class="text-center">Sinal</th>
+                                            <th class="text-center">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for fii in dados.itens %}
+                                        <tr>
+                                            <td class="ps-3 fw-bold">{{ fii.ticker }}</td>
+                                            <td>{{ fii.quantidade }}</td>
+
+                                            <td>
+                                                <span class="fw-bold">R$ {{ fii.preco_atual|default:fii.preco_medio|default:"0.00"|floatformat:2 }}</span><br>
+                                                <small class="text-muted" style="font-size:0.72rem;">PM: R$ {{ fii.preco_medio|default_if_none:"0.00"|floatformat:2 }}</small>
+                                            </td>
+
+                                            <td class="fw-bold {% if fii.variacao < 0 %}text-danger-bright{% else %}text-success-bright{% endif %}">
+                                                <i class="bi {% if fii.variacao < 0 %}bi-graph-down-arrow{% else %}bi-graph-up-arrow{% endif %}"></i>
+                                                {{ fii.variacao|default:"0.00"|floatformat:2 }}%
+                                            </td>
+
+                                            <td class="fw-bold">R$ {{ fii.preco_teto|default_if_none:"0.00"|floatformat:2 }}</td>
+
+                                            <td style="min-width: 120px;">
+                                                <div class="small mb-1">
+                                                    {% if fii.preco_teto and fii.preco_atual and fii.preco_atual <= fii.preco_teto %}
+                                                        <span class="text-success-bright fw-bold"><i class="bi bi-check-circle-fill"></i> No Alvo!</span>
+                                                    {% else %}
+                                                        <span class="text-muted">Faltam R$ {{ fii.falta_quanto|default:"0.00"|floatformat:2 }}</span>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="progress">
+                                                    <div class="progress-bar {% if fii.preco_teto and fii.preco_atual and fii.preco_atual <= fii.preco_teto %}bg-success{% else %}bg-primary{% endif %}"
+                                                         role="progressbar"
+                                                         style="width: min({% if fii.preco_atual and fii.preco_atual > 0 %}{% widthratio fii.preco_teto fii.preco_atual 100 %}{% else %}0{% endif %}%, 100%)">
+                                                    </div>
+                                                </div>
+                                            </td>
+
+                                            <td class="text-center">
+                                                {% if fii.preco_teto and fii.preco_atual and fii.preco_atual <= fii.preco_teto %}
+                                                    <span class="badge badge-buy px-2 py-1"><i class="bi bi-lightning-charge-fill me-1"></i>COMPRAR</span>
+                                                {% else %}
+                                                    <span class="badge badge-wait px-2 py-1"><i class="bi bi-pause-circle me-1"></i>AGUARDAR</span>
+                                                {% endif %}
+                                            </td>
+
+                                            <td class="text-center">
+                                                <div class="d-flex justify-content-center gap-1">
+                                                    <a href="{% url 'editar_ativo' fii.pk %}" class="btn btn-sm btn-outline-primary py-0 px-2" title="Editar"><i class="bi bi-pencil-fill" style="font-size:0.75rem;"></i></a>
+                                                    <a href="{% url 'excluir_ativo' fii.pk %}" class="btn btn-sm btn-outline-danger py-0 px-2" title="Excluir"><i class="bi bi-trash3-fill" style="font-size:0.75rem;"></i></a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="alert alert-info card p-4 text-center">
+                    <div>Nenhum ativo cadastrado na carteira.</div>
+                </div>
+                {% endfor %}
             </div>
         </div>
+
+        <!-- Painel Lateral: Gráficos -->
+        <div class="col-12 col-xl-4 d-flex flex-column gap-3">
+
+            <div class="card p-3">
+                <div class="category-label mb-3">
+                    <i class="bi bi-pie-chart-fill me-1"></i>Distribuição por Tipo (R$)
+                </div>
+                <div style="position: relative; height: 210px;">
+                    <canvas id="chartDiversificacao"></canvas>
+                </div>
+            </div>
+
+            <div class="card p-3">
+                <div class="category-label mb-3">
+                    <i class="bi bi-bar-chart-steps me-1"></i>Percentual por Tipo
+                </div>
+                <div style="position: relative; height: 210px;">
+                    <canvas id="chartPercentual"></canvas>
+                </div>
+            </div>
+
+        </div>
+
     </div>
 </div>
 
-<div class="row mb-4">
-    <div class="col-md-8">
-        <div class="row h-100">
-            <div class="col-md-6 mb-3">
-                <div class="card shadow-sm border-0 p-3 h-100">
-                    <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Patrimônio Alocado</small>
-                    <h3 class="fw-bold mb-0 text-white">R$ {{ total_investido|floatformat:2 }}</h3>
-                </div>
-            </div>
-            <div class="col-md-6 mb-3">
-                <div class="card shadow-sm border-0 p-3 h-100">
-                    <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Projeção de Dividendos</small>
-                    <h3 class="text-success-bright fw-bold mb-0">R$ {{ renda_estimada|floatformat:2 }}</h3>
-                </div>
-            </div>
-            <div class="col-md-6 mb-3">
-                <div class="card shadow-sm border-0 p-3 h-100">
-                    <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Bola de Neve Ativa</small>
-                    <h3 class="text-info fw-bold mb-0">{{ magic_atingidos }} <span class="text-muted" style="font-size: 1rem;">de {{ total_ativos }}</span></h3>
-                </div>
-            </div>
-            <div class="col-md-6 mb-3">
-                <div class="card shadow-sm border-0 p-3 h-100">
-                    <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Status do Sistema</small>
-                    <h3 class="text-warning-soft fw-bold mb-0" style="font-size: 1.2rem;">ONLINE 🤖</h3>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-4 mb-3">
-        <div class="card shadow-sm border-0 p-3 h-100">
-            <small class="text-muted text-uppercase fw-bold mb-3" style="font-size: 0.7rem;">Diversificação por Setor</small>
-            <div style="height: 180px;">
-                <canvas id="chartDiversificacao"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
-</div>
+<!-- Scripts JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-    const ctx = document.getElementById('chartDiversificacao').getContext('2d');
-    new Chart(ctx, {
+    const labelsGrafico     = {{ labels_grafico|default:"[]"|safe }};
+    const dadosGrafico      = {{ dados_grafico|default:"[]"|safe }};
+    const percentuaisGrafico = {{ percentuais_grafico|default:"[]"|safe }};
+    const coresGrafico      = {{ cores_grafico|default:"[]"|safe }};
+
+    function legendColor() {
+        return document.documentElement.classList.contains('light') ? '#1f2328' : '#c9d1d9';
+    }
+    function gridColor() {
+        return document.documentElement.classList.contains('light') ? '#d0d7de' : '#30363d';
+    }
+
+    const ctxDonut = document.getElementById('chartDiversificacao').getContext('2d');
+    const totalValor = dadosGrafico.reduce((a, b) => a + b, 0) || 1;
+    const chartDonut = new Chart(ctxDonut, {
         type: 'doughnut',
         data: {
-            labels: {{ labels_grafico|safe }},
+            labels: labelsGrafico,
             datasets: [{
-                data: {{ dados_grafico|safe }},
-                backgroundColor: [
-                    '#39d353', // Verde (Tijolo)
-                    '#2188ff', // Azul (Papel)
-                    '#f1e05a', // Amarelo (Fof)
-                    '#ff7b72', // Vermelho (Híbrido)
-                    '#8957e5'  // Roxo (Desenvolvimento)
-                ],
+                data: dadosGrafico,
+                backgroundColor: coresGrafico,
                 borderWidth: 0,
-                cutout: '70%' // Deixa a rosca mais fina e elegante
+                cutout: '68%'
             }]
         },
         options: {
@@ -222,16 +504,89 @@
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    position: 'right',
-                    labels: {
-                        color: '#c9d1d9',
-                        padding: 10,
-                        font: { size: 11 }
-                    }
+                    position: 'bottom',
+                    labels: { color: legendColor(), padding: 10, font: { size: 11 }, boxWidth: 12 }
                 }
             }
         }
     });
+
+    const ctxBar = document.getElementById('chartPercentual').getContext('2d');
+    const chartBar = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+            labels: labelsGrafico,
+            datasets: [{
+                label: '% da Carteira',
+                data: percentuaisGrafico,
+                backgroundColor: coresGrafico,
+                borderRadius: 5,
+                borderWidth: 0
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { max: 100, ticks: { color: legendColor(), callback: v => v + '%' }, grid: { color: gridColor() } },
+                y: { ticks: { color: legendColor() }, grid: { display: false } }
+            }
+        }
+    });
+
+    // Theme Toggle
+    const root = document.documentElement;
+    const btn = document.getElementById('btnTheme');
+
+    function applyTheme(theme) {
+        if (theme === 'light') {
+            root.classList.add('light');
+            btn.innerHTML = '<i class="bi bi-sun-fill"></i>';
+        } else {
+            root.classList.remove('light');
+            btn.innerHTML = '<i class="bi bi-moon-stars-fill"></i>';
+        }
+        localStorage.setItem('theme', theme);
+    }
+
+    applyTheme(localStorage.getItem('theme') || 'dark');
+    btn.addEventListener('click', () => {
+        applyTheme(root.classList.contains('light') ? 'dark' : 'light');
+    });
+</script>
+<script>
+    // Contador da última atualização
+    let segundosDecorridos = 0;
+    const tempoTotalReload = 180; // tempo total em segundos para atualizar a página
+
+    const elTempoDecorrido = document.getElementById('tempoDecorrido');
+    const elTempoRestante = document.getElementById('tempoRestante');
+
+    function formatarTempo(segundos) {
+        if (segundos < 60) {
+            return `há ${segundos}s`;
+        }
+        const minutos = Math.floor(segundos / 60);
+        const segRestantes = segundos % 60;
+        return segRestantes > 0 ? `há ${minutos}m ${segRestantes}s` : `há ${minutos}m`;
+    }
+
+    setInterval(() => {
+        segundosDecorridos++;
+
+        // Atualiza o tempo decorrido desde o carregamento
+        if (elTempoDecorrido) {
+            elTempoDecorrido.textContent = formatarTempo(segundosDecorridos);
+        }
+
+        // Atualiza a contagem regressiva para a próxima atualização
+        const restantes = tempoTotalReload - segundosDecorridos;
+        if (elTempoRestante && restantes >= 0) {
+            elTempoRestante.textContent = `${restantes}s`;
+        }
+    }, 1000);
 </script>
 </body>
 </html>
